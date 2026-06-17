@@ -49,6 +49,19 @@ PixelRGB cast_ray(const Coord3D& origin, const Vec3& dir,
 
   for (std::size_t i{0}; i < lights.size(); ++i) {
     Vec3 light_dir{normalize(lights[i].m_position - hit)};
+    double light_dist{norm(lights[i].m_position - hit)};
+
+    // checking if the hit point lies in the shadow of the lights[i]
+    Vec3 shadow_orig = {light_dir * N < 0 ? hit - N * 1e-3 : hit + N * 1e-3};
+    Vec3 shadow_pt{};
+    Vec3 shadow_N{};
+    Material tmpmaterial{};
+
+    if (scene_intersect(shadow_orig, light_dir, spheres, shadow_pt, shadow_N,
+                        tmpmaterial) &&
+        norm(shadow_pt - shadow_orig) < light_dist) {
+      continue;
+    }
 
     diffuse_light_intensity +=
         lights[i].m_intensity * std::max(0.0, light_dir * N);
