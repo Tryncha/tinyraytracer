@@ -23,6 +23,12 @@ struct Vector {
   }
 };
 
+// clang-format off
+struct Coord3D  : Vector<double, 3> {};
+struct Vec3     : Vector<double, 3> {};
+struct PixelRGB : Vector<double, 3> {};
+// clang-format on
+
 template <typename T, std::size_t N>
 std::ostream& operator<<(std::ostream& out, const Vector<T, N>& v) {
   std::cout << '[';
