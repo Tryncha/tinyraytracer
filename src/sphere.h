@@ -5,10 +5,6 @@
 #include "vector.h"
 
 struct Sphere {
-  Coord3D m_center{};
-  double m_radius{};
-  Material m_material{};
-
   Sphere(const Coord3D& center, double radius, const Material& material)
       : m_center{center}, m_radius{radius}, m_material{material} {}
 
@@ -41,6 +37,10 @@ struct Sphere {
 
     return true;
   }
+
+  Coord3D m_center{};
+  double m_radius{};
+  Material m_material{};
 };
 
 #endif

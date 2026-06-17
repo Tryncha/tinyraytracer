@@ -23,8 +23,8 @@ constexpr PixelRGB gray     {0.4, 0.4, 0.3};
 }
 
 namespace material {
-const Material ivory     {PixelRGB{0.4, 0.4, 0.3}};
-const Material red_rubber{PixelRGB{0.3, 0.1, 0.1}};
+const Material ivory     {PixelRGB{0.4, 0.4, 0.3}, Vec2{0.6, 0.3}, 50.0};
+const Material red_rubber{PixelRGB{0.3, 0.1, 0.1}, Vec2{0.9, 0.1}, 10.0};
 }
 // clang-format on
 

@@ -24,8 +24,9 @@ struct Vector {
 };
 
 // clang-format off
-using Coord3D  = Vector<double, 3>;
+using Vec2     = Vector<double, 2>;
 using Vec3     = Vector<double, 3>;
+using Coord3D  = Vector<double, 3>;
 using PixelRGB = Vector<double, 3>;
 // clang-format on
 

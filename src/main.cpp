@@ -12,9 +12,11 @@
 #include "sphere.h"
 #include "vector.h"
 
+Vec3 reflect(const Vec3& I, const Vec3& N) { return I - N * 2.0 * (I * N); }
+
 bool scene_intersect(const Coord3D& origin, const Vec3& dir,
-                     const std::vector<Sphere>& spheres, Coord3D& hit,
-                     Vec3& norm, Material& material) {
+                     const std::vector<Sphere>& spheres, Coord3D& hit, Vec3& N,
+                     Material& material) {
   double spheres_dist{std::numeric_limits<float>::max()};
 
   for (std::size_t i{0}; i < spheres.size(); ++i) {
@@ -23,34 +25,43 @@ bool scene_intersect(const Coord3D& origin, const Vec3& dir,
     if (spheres[i].is_intersect(origin, dir, dist_i) && dist_i < spheres_dist) {
       spheres_dist = dist_i;
       hit = origin + dir * dist_i;
-      norm = normalize(hit - spheres[i].m_center);
+      N = normalize(hit - spheres[i].m_center);
       material = spheres[i].m_material;
     }
   }
 
-  return spheres_dist < 1000;
+  return spheres_dist < 1000.0;
 }
 
 PixelRGB cast_ray(const Coord3D& origin, const Vec3& dir,
                   const std::vector<Sphere>& spheres,
                   const std::vector<Light>& lights) {
   Coord3D hit{};
-  Vec3 norm{};
+  Vec3 N{};
   Material material{};
 
-  if (!scene_intersect(origin, dir, spheres, hit, norm, material)) {
+  if (!scene_intersect(origin, dir, spheres, hit, N, material)) {
     return color::lightblue;
   }
 
   double diffuse_light_intensity{};
+  double specular_light_intensity{};
 
-  for (std::size_t i{}; i < lights.size(); ++i) {
+  for (std::size_t i{0}; i < lights.size(); ++i) {
     Vec3 light_dir{normalize(lights[i].m_position - hit)};
+
     diffuse_light_intensity +=
-        lights[i].m_intensity * std::max(0.0, light_dir * norm);
+        lights[i].m_intensity * std::max(0.0, light_dir * N);
+    specular_light_intensity +=
+        std::pow(std::max(0.0, -1.0 * reflect(-1.0 * light_dir, N) * dir),
+                 material.m_specular_exp) *
+        lights[i].m_intensity;
   }
 
-  return material.m_diffuse_color * diffuse_light_intensity;
+  return (material.m_diffuse_color * diffuse_light_intensity *
+          material.m_albedo[0]) +
+         (Vec3{1.0, 1.0, 1.0} * specular_light_intensity *
+          material.m_albedo[1]);
 }
 
 void render(std::vector<PixelRGB>& framebuffer,
@@ -84,7 +95,10 @@ void generate_ppm(const std::vector<PixelRGB>& framebuffer,
 
   ofs << "P6\n" << constant::width << ' ' << constant::height << "\n255\n";
 
-  for (const auto& pixel : framebuffer) {
+  for (auto pixel : framebuffer) {
+    double max{std::max(pixel[0], std::max(pixel[1], pixel[2]))};
+    if (max > 1.0) pixel = pixel * (1.0 / max);
+
     for (std::size_t channel{0}; channel < 3; ++channel) {
       const auto value{static_cast<std::uint8_t>(
           255.0 * std::clamp(pixel[channel], 0.0, 1.0))};
@@ -106,7 +120,9 @@ int main(int, char**) {
   spheres.push_back(Sphere{Coord3D{{ 1.5, -0.5, -18.0}}, 3, material::red_rubber});
   spheres.push_back(Sphere{Coord3D{{ 7.0,  5.0, -18.0}}, 4, material::ivory});
 
-  lights.push_back(Light{Coord3D{{-20.0, 20.0, 20.0}}, 1.5});
+  lights.push_back(Light{Coord3D{{-20.0, 20.0,  20.0}}, 1.5});
+  lights.push_back(Light{Coord3D{{ 30.0, 50.0, -25.0}}, 1.8});
+  lights.push_back(Light{Coord3D{{ 30.0, 20.0,  30.0}}, 1.7});
   // clang-format on
 
   render(framebuffer, spheres, lights);
