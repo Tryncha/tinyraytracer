@@ -1,2 +1,4 @@
 .ignore
 out
+
+gen_image.ppm
