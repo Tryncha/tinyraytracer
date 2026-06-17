@@ -4,16 +4,16 @@
 #include "vector.h"
 
 struct Material {
-  Material(const PixelRGB& diffuse_color, const Vec2& albedo,
+  Material(const Vec3& albedo, const PixelRGB& diffuse_color,
            double specular_exp)
-      : m_diffuse_color{diffuse_color},
-        m_albedo{albedo},
+      : m_albedo{albedo},
+        m_diffuse_color{diffuse_color},
         m_specular_exp{specular_exp} {}
 
-  Material() : m_diffuse_color{}, m_albedo{1.0}, m_specular_exp{} {}
+  Material() : m_albedo{1, 0, 0}, m_diffuse_color{}, m_specular_exp{} {}
 
+  Vec3 m_albedo{};
   PixelRGB m_diffuse_color{};
-  Vec2 m_albedo{};
   double m_specular_exp{};
 };
 

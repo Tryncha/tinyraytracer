@@ -35,24 +35,33 @@ bool scene_intersect(const Coord3D& origin, const Vec3& dir,
 
 PixelRGB cast_ray(const Coord3D& origin, const Vec3& dir,
                   const std::vector<Sphere>& spheres,
-                  const std::vector<Light>& lights) {
-  Coord3D hit{};
+                  const std::vector<Light>& lights, std::size_t depth = 0) {
+  Coord3D point{};
   Vec3 N{};
   Material material{};
 
-  if (!scene_intersect(origin, dir, spheres, hit, N, material)) {
+  if (depth > 4 || !scene_intersect(origin, dir, spheres, point, N, material)) {
     return color::lightblue;
   }
+
+  Vec3 reflect_dir = normalize(reflect(dir, N));
+
+  // offset the original point to avoid occlusion by the object itself
+  Vec3 reflect_orig =
+      (reflect_dir * N < 0) ? (point - N * 1e-3) : (point + N * 1e-3);
+  Vec3 reflect_color =
+      cast_ray(reflect_orig, reflect_dir, spheres, lights, depth + 1);
 
   double diffuse_light_intensity{};
   double specular_light_intensity{};
 
   for (std::size_t i{0}; i < lights.size(); ++i) {
-    Vec3 light_dir{normalize(lights[i].m_position - hit)};
-    double light_dist{norm(lights[i].m_position - hit)};
+    Vec3 light_dir{normalize(lights[i].m_position - point)};
+    double light_dist{norm(lights[i].m_position - point)};
 
-    // checking if the hit point lies in the shadow of the lights[i]
-    Vec3 shadow_orig = {light_dir * N < 0 ? hit - N * 1e-3 : hit + N * 1e-3};
+    // checking if the point lies in the shadow of the lights[i]
+    Vec3 shadow_orig = {light_dir * N < 0 ? point - N * 1e-3
+                                          : point + N * 1e-3};
     Vec3 shadow_pt{};
     Vec3 shadow_N{};
     Material tmpmaterial{};
@@ -74,7 +83,8 @@ PixelRGB cast_ray(const Coord3D& origin, const Vec3& dir,
   return (material.m_diffuse_color * diffuse_light_intensity *
           material.m_albedo[0]) +
          (Vec3{1.0, 1.0, 1.0} * specular_light_intensity *
-          material.m_albedo[1]);
+          material.m_albedo[1]) +
+         (reflect_color * material.m_albedo[2]);
 }
 
 void render(std::vector<PixelRGB>& framebuffer,
@@ -129,9 +139,9 @@ int main(int, char**) {
 
   // clang-format off
   spheres.push_back(Sphere{Coord3D{{-3.0,  0.0, -16.0}}, 2, material::ivory});
-  spheres.push_back(Sphere{Coord3D{{-1.0, -1.5, -12.0}}, 2, material::red_rubber});
+  spheres.push_back(Sphere{Coord3D{{-1.0, -1.5, -12.0}}, 2, material::mirror});
   spheres.push_back(Sphere{Coord3D{{ 1.5, -0.5, -18.0}}, 3, material::red_rubber});
-  spheres.push_back(Sphere{Coord3D{{ 7.0,  5.0, -18.0}}, 4, material::ivory});
+  spheres.push_back(Sphere{Coord3D{{ 7.0,  5.0, -18.0}}, 4, material::mirror});
 
   lights.push_back(Light{Coord3D{{-20.0, 20.0,  20.0}}, 1.5});
   lights.push_back(Light{Coord3D{{ 30.0, 50.0, -25.0}}, 1.8});
