@@ -2,65 +2,49 @@
 #include <cmath>
 #include <cstddef>
 #include <fstream>
-#include <optional>
+#include <limits>
 #include <string>
 #include <vector>
 
 #include "constant.h"
+#include "material.h"
+#include "sphere.h"
 #include "vector.h"
 
-class Sphere {
- private:
-  Coord3D m_center{};
-  double m_radius{};
+bool scene_intersect(const Coord3D& origin, const Vec3& dir,
+                     const std::vector<Sphere>& spheres, Coord3D& hit,
+                     Vec3& norm, Material& material) {
+  double spheres_dist{std::numeric_limits<float>::max()};
 
- public:
-  Sphere(const Coord3D& center, double radius)
-      : m_center{center}, m_radius{radius} {}
+  for (std::size_t i{0}; i < spheres.size(); ++i) {
+    double dist_i{};
 
-  std::optional<double> intersect(const Coord3D& origin,
-                                  const Vec3& dir_norm) const {
-    // Vector from origin to center
-    const Vec3 L{m_center - origin};
-    // t closest approach
-    const double tca{L * dir_norm};
-    // Distance squared
-    const double dist_sq{L * L - tca * tca};
-
-    if (dist_sq > m_radius * m_radius) {
-      return std::nullopt;
+    if (spheres[i].is_intersect(origin, dir, dist_i) && dist_i < spheres_dist) {
+      spheres_dist = dist_i;
+      hit = origin + dir * dist_i;
+      norm = normalize(hit - spheres[i].get_center());
+      material = spheres[i].get_material();
     }
-
-    // t half chord
-    const double thc{std::sqrt((m_radius * m_radius) - dist_sq)};
-    // t_min and t_max are solutions for the equation
-    double t_min{tca - thc};
-    double t_max{tca + thc};
-
-    if (t_min < 0) {
-      t_min = t_max;
-    }
-
-    if (t_min < 0) {
-      return std::nullopt;
-    }
-
-    return t_min;
   }
-};
 
-PixelRGB cast_ray(const Coord3D& orig, const Vec3& dir, const Sphere& sphere) {
-  auto hit{sphere.intersect(orig, dir)};
+  return spheres_dist < 1000;
+}
 
-  if (!hit) {
-    // double sphere_dist{*hit};
+PixelRGB cast_ray(const Coord3D& origin, const Vec3& dir,
+                  const std::vector<Sphere>& spheres) {
+  Coord3D hit{};
+  Vec3 norm{};
+  Material material{};
+
+  if (!scene_intersect(origin, dir, spheres, hit, norm, material)) {
     return color::lightblue;
   }
 
-  return color::gray;
+  return material.m_diffuse_color;
 }
 
-void render(std::vector<PixelRGB>& framebuffer, const Sphere& sphere) {
+void render(std::vector<PixelRGB>& framebuffer,
+            const std::vector<Sphere>& spheres) {
   for (int j{0}; j < constant::height; ++j) {
     for (int i{0}; i < constant::width; ++i) {
       const double x{(2 * (i + 0.5) / constant::width - 1) *
@@ -73,7 +57,7 @@ void render(std::vector<PixelRGB>& framebuffer, const Sphere& sphere) {
       const Vec3 dir{normalize(Vec3{x, y, -1})};
 
       framebuffer[static_cast<std::size_t>(i + (j * constant::width))] =
-          cast_ray(camera::origin, dir, sphere);
+          cast_ray(camera::origin, dir, spheres);
     }
   }
 }
@@ -102,9 +86,16 @@ void generate_ppm(const std::vector<PixelRGB>& framebuffer,
 int main(int, char**) {
   std::vector<PixelRGB> framebuffer(constant::width * constant::height);
 
-  const Sphere sphere{Coord3D{{-3.0, 0.0, -16.0}}, 2};
+  std::vector<Sphere> spheres{};
 
-  render(framebuffer, sphere);
+  // clang-format off
+  spheres.push_back(Sphere{Coord3D{{-3.0,  0.0, -16.0}}, 2, material::ivory});
+  spheres.push_back(Sphere{Coord3D{{-1.0, -1.5, -12.0}}, 2, material::red_rubber});
+  spheres.push_back(Sphere{Coord3D{{ 1.5, -0.5, -18.0}}, 3, material::red_rubber});
+  spheres.push_back(Sphere{Coord3D{{ 7.0,  5.0, -18.0}}, 4, material::ivory});
+  // clang-format on
+
+  render(framebuffer, spheres);
   generate_ppm(framebuffer, "./gen_image.ppm");
 
   return 0;

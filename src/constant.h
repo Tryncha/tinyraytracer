@@ -3,6 +3,7 @@
 
 #include <numbers>
 
+#include "material.h"
 #include "vector.h"
 
 // clang-format off
@@ -19,6 +20,11 @@ constexpr double  fov   {std::numbers::pi / 2.0};
 namespace color {
 constexpr PixelRGB lightblue{0.2, 0.7, 0.8};
 constexpr PixelRGB gray     {0.4, 0.4, 0.3};
+}
+
+namespace material {
+const Material ivory     {PixelRGB{0.4, 0.4, 0.3}};
+const Material red_rubber{PixelRGB{0.3, 0.1, 0.1}};
 }
 // clang-format on
 
