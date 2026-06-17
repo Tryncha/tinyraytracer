@@ -7,14 +7,15 @@
 #include <vector>
 
 #include "constant.h"
+#include "vector.h"
 
 void generate_ppm(const std::string& filename) {
-  using Pixel = std::array<float, 3>;
+  using Pixel = Vector<float, 3>;
   std::vector<Pixel> framebuffer(constant::width * constant::height);
 
   for (std::size_t y{0}; y < constant::height; ++y) {
     for (std::size_t x{0}; x < constant::width; ++x) {
-      framebuffer[x + (y * constant::width)] = std::array<float, 3>{
+      framebuffer[x + (y * constant::width)] = Pixel{
           static_cast<float>(y) / static_cast<float>(constant::height),
           static_cast<float>(x) / static_cast<float>(constant::width), 0.0f};
     }
@@ -30,9 +31,9 @@ void generate_ppm(const std::string& filename) {
   ofs << "P6\n" << constant::width << ' ' << constant::height << "\n255\n";
 
   for (const auto& pixel : framebuffer) {
-    for (const float channel : pixel) {
-      const auto value{
-          static_cast<std::uint8_t>(255.0f * std::clamp(channel, 0.0f, 1.0f))};
+    for (std::size_t channel{0}; channel < 3; ++channel) {
+      const auto value{static_cast<std::uint8_t>(
+          255.0f * std::clamp(pixel[channel], 0.0f, 1.0f))};
 
       ofs.write(reinterpret_cast<const char*>(&value), sizeof(value));
     }
