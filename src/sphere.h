@@ -4,19 +4,13 @@
 #include "material.h"
 #include "vector.h"
 
-class Sphere {
- private:
+struct Sphere {
   Coord3D m_center{};
   double m_radius{};
   Material m_material{};
 
- public:
   Sphere(const Coord3D& center, double radius, const Material& material)
       : m_center{center}, m_radius{radius}, m_material{material} {}
-
-  Coord3D get_center() const { return m_center; }
-  double get_radius() const { return m_radius; }
-  Material get_material() const { return m_material; }
 
   bool is_intersect(const Coord3D& origin, const Vec3& dir_norm,
                     double& t_min) const {

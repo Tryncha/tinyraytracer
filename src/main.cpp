@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "constant.h"
+#include "light.h"
 #include "material.h"
 #include "sphere.h"
 #include "vector.h"
@@ -22,8 +23,8 @@ bool scene_intersect(const Coord3D& origin, const Vec3& dir,
     if (spheres[i].is_intersect(origin, dir, dist_i) && dist_i < spheres_dist) {
       spheres_dist = dist_i;
       hit = origin + dir * dist_i;
-      norm = normalize(hit - spheres[i].get_center());
-      material = spheres[i].get_material();
+      norm = normalize(hit - spheres[i].m_center);
+      material = spheres[i].m_material;
     }
   }
 
@@ -31,7 +32,8 @@ bool scene_intersect(const Coord3D& origin, const Vec3& dir,
 }
 
 PixelRGB cast_ray(const Coord3D& origin, const Vec3& dir,
-                  const std::vector<Sphere>& spheres) {
+                  const std::vector<Sphere>& spheres,
+                  const std::vector<Light>& lights) {
   Coord3D hit{};
   Vec3 norm{};
   Material material{};
@@ -40,11 +42,20 @@ PixelRGB cast_ray(const Coord3D& origin, const Vec3& dir,
     return color::lightblue;
   }
 
-  return material.m_diffuse_color;
+  double diffuse_light_intensity{};
+
+  for (std::size_t i{}; i < lights.size(); ++i) {
+    Vec3 light_dir{normalize(lights[i].m_position - hit)};
+    diffuse_light_intensity +=
+        lights[i].m_intensity * std::max(0.0, light_dir * norm);
+  }
+
+  return material.m_diffuse_color * diffuse_light_intensity;
 }
 
 void render(std::vector<PixelRGB>& framebuffer,
-            const std::vector<Sphere>& spheres) {
+            const std::vector<Sphere>& spheres,
+            const std::vector<Light>& lights) {
   for (int j{0}; j < constant::height; ++j) {
     for (int i{0}; i < constant::width; ++i) {
       const double x{(2 * (i + 0.5) / constant::width - 1) *
@@ -57,7 +68,7 @@ void render(std::vector<PixelRGB>& framebuffer,
       const Vec3 dir{normalize(Vec3{x, y, -1})};
 
       framebuffer[static_cast<std::size_t>(i + (j * constant::width))] =
-          cast_ray(camera::origin, dir, spheres);
+          cast_ray(camera::origin, dir, spheres, lights);
     }
   }
 }
@@ -87,15 +98,18 @@ int main(int, char**) {
   std::vector<PixelRGB> framebuffer(constant::width * constant::height);
 
   std::vector<Sphere> spheres{};
+  std::vector<Light> lights{};
 
   // clang-format off
   spheres.push_back(Sphere{Coord3D{{-3.0,  0.0, -16.0}}, 2, material::ivory});
   spheres.push_back(Sphere{Coord3D{{-1.0, -1.5, -12.0}}, 2, material::red_rubber});
   spheres.push_back(Sphere{Coord3D{{ 1.5, -0.5, -18.0}}, 3, material::red_rubber});
   spheres.push_back(Sphere{Coord3D{{ 7.0,  5.0, -18.0}}, 4, material::ivory});
+
+  lights.push_back(Light{Coord3D{{-20.0, 20.0, 20.0}}, 1.5});
   // clang-format on
 
-  render(framebuffer, spheres);
+  render(framebuffer, spheres, lights);
   generate_ppm(framebuffer, "./gen_image.ppm");
 
   return 0;
