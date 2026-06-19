@@ -33,6 +33,66 @@ struct Vector {
   }
 };
 
+// Specializations for N = 2,3,4 replace the generic array-based layout with
+// named members (x, y, z, w), enabling cleaner, semantically meaningful field
+// access (v.x, v.y, v.z, v.w) without losing index-based access via operator[].
+template <typename T>
+struct Vector<T, 2> {
+  T x{};
+  T y{};
+
+  T& operator[](std::size_t i) {
+    assert(i < 2);
+    return (i == 0 ? x : y);
+  }
+
+  const T& operator[](std::size_t i) const {
+    assert(i < 2);
+    return (i == 0 ? x : y);
+  }
+
+  Vector<T, 2> operator-() const { return {-x, -y}; }
+};
+
+template <typename T>
+struct Vector<T, 3> {
+  T x{};
+  T y{};
+  T z{};
+
+  T& operator[](std::size_t i) {
+    assert(i < 3);
+    return (i == 0 ? x : (i == 1 ? y : z));
+  }
+
+  const T& operator[](std::size_t i) const {
+    assert(i < 3);
+    return (i == 0 ? x : (i == 1 ? y : z));
+  }
+
+  Vector<T, 3> operator-() const { return {-x, -y, -z}; }
+};
+
+template <typename T>
+struct Vector<T, 4> {
+  T x{};
+  T y{};
+  T z{};
+  T w{};
+
+  T& operator[](std::size_t i) {
+    assert(i < 4);
+    return (i == 0 ? x : (i == 1 ? y : (i == 2 ? z : w)));
+  }
+
+  const T& operator[](std::size_t i) const {
+    assert(i < 4);
+    return (i == 0 ? x : (i == 1 ? y : (i == 2 ? z : w)));
+  }
+
+  Vector<T, 4> operator-() const { return {-x, -y, -z, -w}; }
+};
+
 // clang-format off
 using Vec2     = Vector<double, 2>;
 using Vec3     = Vector<double, 3>;

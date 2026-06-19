@@ -53,7 +53,30 @@ bool scene_intersect(const Coord3D& origin, const Vec3& dir,
     }
   }
 
-  return spheres_dist < 1000.0;
+  double checkerboard_dist{std::numeric_limits<double>::max()};
+
+  if (std::abs(dir.y) > 1e-3) {
+    // the checkerboard plane has equation y = -4
+    double d{-(origin.y + 4) / dir.y};
+    Coord3D point{origin + dir * d};
+
+    if (d > 0 && std::abs(point.x) < 10 && point.z < -10 && point.z > -30 &&
+        d < spheres_dist) {
+      checkerboard_dist = d;
+      hit = point;
+      N = Vec3{0.0, 1.0, 0.0};
+
+      // in bitwise operations: x & 1, checks if x is odd
+      material.m_diffuse_color =
+          ((static_cast<int>(hit.x / 2 + 1000) + static_cast<int>(hit.z / 2)) &
+                   1
+               ? PixelRGB{1.0, 1.0, 1.0}
+               : PixelRGB{1.0, 0.7, 0.3}) *
+          0.3;
+    }
+  }
+
+  return std::min(spheres_dist, checkerboard_dist) < 1000.0;
 }
 
 PixelRGB cast_ray(const Coord3D& origin, const Vec3& dir,
@@ -168,14 +191,14 @@ int main(int, char**) {
   std::vector<Light> lights{};
 
   // clang-format off
-  spheres.push_back(Sphere{Coord3D{{-3.0,  0.0, -16.0}}, material::ivory,  2.0});
-  spheres.push_back(Sphere{Coord3D{{-1.0, -1.5, -12.0}}, material::glass,  2.0});
-  spheres.push_back(Sphere{Coord3D{{ 1.5, -0.5, -18.0}}, material::rubber, 3.0});
-  spheres.push_back(Sphere{Coord3D{{ 7.0,  5.0, -18.0}}, material::mirror, 4.0});
+  spheres.push_back(Sphere{Coord3D{-3.0,  0.0, -16.0}, material::ivory,  2.0});
+  spheres.push_back(Sphere{Coord3D{-1.0, -1.5, -12.0}, material::glass,  2.0});
+  spheres.push_back(Sphere{Coord3D{ 1.5, -0.5, -18.0}, material::rubber, 3.0});
+  spheres.push_back(Sphere{Coord3D{ 7.0,  5.0, -18.0}, material::mirror, 4.0});
 
-  lights.push_back(Light{Coord3D{{-20.0, 20.0,  20.0}}, 1.5});
-  lights.push_back(Light{Coord3D{{ 30.0, 50.0, -25.0}}, 1.8});
-  lights.push_back(Light{Coord3D{{ 30.0, 20.0,  30.0}}, 1.7});
+  lights.push_back(Light{Coord3D{-20.0, 20.0,  20.0}, 1.5});
+  lights.push_back(Light{Coord3D{ 30.0, 50.0, -25.0}, 1.8});
+  lights.push_back(Light{Coord3D{ 30.0, 20.0,  30.0}, 1.7});
   // clang-format on
 
   render(framebuffer, spheres, lights);
