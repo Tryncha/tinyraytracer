@@ -23,9 +23,14 @@ constexpr PixelRGB gray     {0.4, 0.4, 0.3};
 }
 
 namespace material {
-const Material ivory     {Vec3{0.6,  0.3, 0.1}, PixelRGB{0.4, 0.4, 0.3},   50.0};
-const Material red_rubber{Vec3{0.9,  0.1, 0.0}, PixelRGB{0.3, 0.1, 0.1},   10.0};
-const Material mirror    {Vec3{0.0, 10.0, 0.8}, PixelRGB{1.0, 1.0, 1.0}, 1425.0};
+const Material ivory {Vec4{0.6,  0.3, 0.1, 0.0}, PixelRGB{0.4, 0.4, 0.3},
+                        50.0, 1.0};
+const Material rubber{Vec4{0.9,  0.1, 0.0, 0.0}, PixelRGB{0.3, 0.1, 0.1},
+                        10.0, 1.0};
+const Material mirror{Vec4{0.0, 10.0, 0.8, 0.0}, PixelRGB{1.0, 1.0, 1.0},
+                      1425.0, 1.0};
+const Material glass {Vec4{0.0,  0.5, 0.1, 0.8}, PixelRGB{0.6, 0.7, 0.8},
+                       125.0, 1.5};
 }
 // clang-format on
 

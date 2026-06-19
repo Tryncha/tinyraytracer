@@ -5,11 +5,11 @@
 #include "vector.h"
 
 struct Sphere {
-  Sphere(const Coord3D& center, double radius, const Material& material)
-      : m_center{center}, m_radius{radius}, m_material{material} {}
+  Sphere(const Coord3D& center, const Material& material, double radius)
+      : m_center{center}, m_material{material}, m_radius{radius} {}
 
-  bool is_intersect(const Coord3D& origin, const Vec3& dir_norm,
-                    double& t_min) const {
+  bool is_ray_intersect(const Coord3D& origin, const Vec3& dir_norm,
+                        double& t_min) const {
     // Vector from origin to center
     const Vec3 L{m_center - origin};
     // t closest approach
@@ -39,8 +39,8 @@ struct Sphere {
   }
 
   Coord3D m_center{};
-  double m_radius{};
   Material m_material{};
+  double m_radius{};
 };
 
 #endif

@@ -21,11 +21,22 @@ struct Vector {
     assert(i < N);
     return values[i];
   }
+
+  Vector<T, N> operator-() const {
+    Vector<T, N> result{};
+
+    for (std::size_t i{0}; i < N; ++i) {
+      result[i] = -values[i];
+    }
+
+    return result;
+  }
 };
 
 // clang-format off
 using Vec2     = Vector<double, 2>;
 using Vec3     = Vector<double, 3>;
+using Vec4     = Vector<double, 4>;
 using Coord3D  = Vector<double, 3>;
 using PixelRGB = Vector<double, 3>;
 // clang-format on
